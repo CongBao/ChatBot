@@ -12,6 +12,7 @@ class ChatBot(object):
 
     def __init__(self, **kwargs):
         self.text_dir = kwargs.get('text_dir')
+        self.embd_dir = kwargs.get('embd_dir')
         self.ckpt_dir = kwargs.get('ckpt_dir')
 
         self.dim = kwargs.get('dim')
