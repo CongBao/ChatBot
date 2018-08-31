@@ -4,7 +4,10 @@ from __future__ import division, print_function
 
 from keras.models import Model
 from keras.layers import Input, LSTM, CuDNNLSTM, Dense
+from keras.preprocessing.text import Tokenizer
 import numpy as np
+
+from .utils import *
 
 __author__ = 'Cong Bao'
 
@@ -25,7 +28,12 @@ class ChatBot(object):
         self.model = None
 
     def load_data(self):
-        pass
+        raw_text = text_preprocess(load_text(self.text_dir))
+        tokenizer = Tokenizer()
+        tokenizer.fit_on_texts(raw_text)
+        print('Number of tokens: ', len(tokenizer.word_index) + 1)
+        encoded_text = tokenizer.texts_to_sequences(raw_text)
+        embed, oov = load_embedding(self.embd_dir, tokenizer.word_index.keys())
 
     def build_model(self):
         lstm = LSTM if self.cpu else CuDNNLSTM
