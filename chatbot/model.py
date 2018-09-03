@@ -8,6 +8,7 @@ from keras.preprocessing.text import Tokenizer
 import numpy as np
 
 from .utils import *
+from .oov import OOV
 
 __author__ = 'Cong Bao'
 
@@ -32,8 +33,10 @@ class ChatBot(object):
         tokenizer = Tokenizer()
         tokenizer.fit_on_texts(raw_text)
         print('Number of tokens: ', len(tokenizer.word_index) + 1)
-        encoded_text = tokenizer.texts_to_sequences(raw_text)
-        embed, oov = load_embedding(self.embd_dir, tokenizer.word_index.keys())
+        # encoded_text = tokenizer.texts_to_sequences(raw_text)
+        embed_dict, oov = load_embedding(self.embd_dir, tokenizer.word_index.keys())
+        print('Number of OOV words: ', len(oov))
+        embed_dict.update(OOV(raw_text, embed_dict, oov).fit())
 
     def build_model(self):
         lstm = LSTM if self.cpu else CuDNNLSTM

@@ -3,8 +3,11 @@
 from __future__ import print_function, division
 
 import numpy as np
+from tqdm import tqdm
 
 __author__ = 'Cong Bao'
+
+BAR_FMT = 'Progress: {percentage:3.0f}% {r_bar}'
 
 def load_text(path):
     with open(path, 'r', encoding='utf-8') as f:
@@ -16,15 +19,18 @@ def load_embedding(path, words=None):
     if words is not None:
         oov = list(words)
         with open(path) as f:
-            for line in f:
+            print('Loading ', path)
+            for line in tqdm(f, bar_format=BAR_FMT):
                 embed = line.split()
-                if embed[0] in oov:
-                    embedding[embed[0]] = np.asarray(embed[1:], dtype='float32')
-                    oov.remove(embed[0])
+                word = embed[0].lower()
+                if word in oov:
+                    embedding[word] = np.asarray(embed[1:], dtype='float32')
+                    oov.remove(word)
         return embedding, oov
     else:
         with open(path) as f:
-            for line in f:
+            print('Loading ', path)
+            for line in tqdm(f, bar_format=BAR_FMT):
                 embed = line.split()
                 embedding[embed[0]] = np.asarray(embed[1:], dtype='float32')
         return embedding
@@ -36,7 +42,7 @@ def text_preprocess(text):
     l2 = ['will not', 'will not', 'would not', 'would not', ' am', ' are', ' have', ' will', ' is', ' had', ' not',
           ' am', ' are', ' have', ' will', ' is', ' had', 'can not', ' not', '', '', ' ,', ' ;', ' .', ' ?', ' !', ' :',
           '? ', '.', ',', '', '', '', '']
-    l3 = ['-', '_', ' *', ' /', '* ', '/ ', '\"', ' \\"', '\\ ', '--', '...', '. . .']
+    l3 = ['-', '_', ' *', ' /', '* ', '/ ', '\'', ' \'', '\' ', '--', '...', '. . .']
     new_text = []
     for line in text:
         line = line.lower()
