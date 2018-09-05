@@ -45,7 +45,7 @@ def text_preprocess(text):
     l3 = ['-', '_', ' *', ' /', '* ', '/ ', '\'', ' \'', '\' ', '--', '...', '. . .']
     new_text = []
     for line in text:
-        line = line.lower()
+        line = line.strip().lower()
         for i, term in enumerate(l1):
             line = line.replace(term, l2[i])
         for term in l3:

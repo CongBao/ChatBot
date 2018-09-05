@@ -34,6 +34,10 @@ class OOV(object):
     def fit(self):
         if len(self.oov_list) == 0:
             return {}
+        ext_dict = {}
+        for w in ['<bos>', '<eos>', '<BOS>', '<EOS>']:
+            if w in self.oov_list:
+                ext_dict[w] = np.random.normal(0., .0001, (self.dim,))
         var_dict = {}
         for w in self.oov_list:
             var_dict[w] = K.random_normal_variable((self.dim, 1), 0., .01, dtype='float32', name=w)
@@ -60,5 +64,5 @@ class OOV(object):
         self.model.fit(inputs, outputs, batch_size=self.batch_size, epochs=self.epochs)
         oov_dict = {}
         for w in self.oov_list:
-            oov_dict[w] = K.get_value(w)
-        return oov_dict
+            oov_dict[w] = np.reshape(K.get_value(w), (self.dim,))
+        return oov_dict.update(ext_dict)
