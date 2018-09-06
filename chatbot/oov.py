@@ -35,7 +35,7 @@ class OOV(object):
         if len(self.oov_list) == 0:
             return {}
         ext_dict = {}
-        for w in ['<bos>', '<eos>', '<BOS>', '<EOS>']:
+        for w in ['bos', 'eos', 'BOS', 'EOS']:
             if w in self.oov_list:
                 ext_dict[w] = np.random.normal(0., .0001, (self.dim,))
         var_dict = {}

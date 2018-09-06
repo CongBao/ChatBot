@@ -3,7 +3,7 @@
 from __future__ import division, print_function
 
 from keras.models import Model
-from keras.layers import Input, LSTM, CuDNNLSTM, Embedding, Dense, Activation, Dot, Concatenate, Flatten
+from keras.layers import Input, LSTM, Embedding, Dense, Activation, Dot, Concatenate
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils.generic_utils import Progbar
@@ -27,8 +27,6 @@ class ChatBot(object):
         self.lr = kwargs.get('lr')
         self.bs = kwargs.get('bs')
         self.epoch = kwargs.get('epoch')
-
-        self.cpu = kwargs.get('cpu')
 
     def load_data(self):
         raw_text = text_preprocess(load_text(self.text_dir))
@@ -101,23 +99,51 @@ class ChatBot(object):
 
     def train_model(self):
         self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy')
-        self.model.fit([self.en_ipt, self.de_ipt], self.de_opt, batch_size=self.bs, epochs=self.epoch, validation_split=.15)
+        self.model.fit([self.en_ipt, self.de_ipt], self.de_opt, batch_size=self.bs, epochs=self.epoch, validation_split=.1)
 
-    def dialogue(self, input_text):
+    def dialogue(self, input_text, mode='beam', k=5):
         input_seq = self.tokenizer.texts_to_sequences([input_text])
-        en_outputs, st_h, st_c = self.encoder_model.predict(input_seq, batch_size=1)
+        en_outputs, st_h, st_c = self.encoder_model.predict(input_seq)
         en_outputs = np.reshape(en_outputs, (1, -1, 256))
         states = [st_h, st_c]
         target_seq = np.asarray([[self.word2idx['bos']]])
-        stop = False
         answer = ''
-        while not stop:
-            output_tokens, h, c = self.decoder_model.predict([en_outputs, target_seq] + states, batch_size=1)
-            sampled_token_idx = np.argmax(output_tokens[0, -1, :])
-            sampled_word = self.idx2word[sampled_token_idx]
-            answer += sampled_word + ' '
-            if sampled_word == 'eos' or len(answer) > self.max_de_seq:
-                stop = True
-            target_seq = np.asarray([[sampled_token_idx]])
-            states = [h, c]
-        return answer
+        if mode == 'beam':
+            answers = []
+            output_tokens, h, c = self.decoder_model.predict([en_outputs, target_seq] + states)
+            top_k_idx = np.argpartition(output_tokens[0, -1, :], -k)[-k:]
+            for idx in top_k_idx:
+                answers.append([(idx, output_tokens[0, -1, idx], [h, c])])
+            count = 0
+            while True:
+                count += 1
+                for _ in range(k):
+                    seq = answers.pop(0)
+                    if self.idx2word[seq[-1][0]] == 'eos':
+                        answers.append(seq)
+                        continue
+                    target_seq = np.asarray([[seq[-1][0]]])
+                    output_tokens, h, c = self.decoder_model.predict([en_outputs, target_seq] + seq[-1][-1])
+                    top_k_idx = np.argpartition(output_tokens[0, -1, :], -k)[-k:]
+                    for idx in top_k_idx:
+                        answers.append(seq + [(idx, output_tokens[0, -1, idx], list([h, c]))])
+                dead_list = [sum([x[1] for x in seq]) for seq in answers] # seq[:, 1]
+                top_k_idx = np.argpartition(dead_list, -k)[-k:]
+                answers = [answers[i] for i in top_k_idx] # answers[top_k_idx]
+                if all([self.idx2word[s[-1][0]] == 'eos' or len(s) > self.max_de_seq for s in answers]):
+                    break
+            dead_list = [sum([x[1] for x in seq]) for seq in answers]
+            best_answer = answers[np.argmax(dead_list)]
+            for token in best_answer[:-1]:
+                answer += self.idx2word[token[0]] + ' '
+        elif mode == 'greedy':
+            while True:
+                output_tokens, h, c = self.decoder_model.predict([en_outputs, target_seq] + states)
+                sampled_token_idx = np.argmax(output_tokens[0, -1, :])
+                sampled_word = self.idx2word[sampled_token_idx]
+                if sampled_word == 'eos' or len(answer) > self.max_de_seq:
+                    break
+                answer += sampled_word + ' '
+                target_seq = np.asarray([[sampled_token_idx]])
+                states = [h, c]
+        return answer.strip().capitalize()
