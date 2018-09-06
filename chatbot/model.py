@@ -87,11 +87,11 @@ class ChatBot(object):
 
         self.encoder_model = Model(en_input, [encoder_outputs, state_h, state_c])
 
-        de_state_input_h = Input(shape=(256,))
-        de_state_input_c = Input(shape=(256,))
+        de_state_input_h = Input(shape=(256,), name='state_h')
+        de_state_input_c = Input(shape=(256,), name='state_c')
         de_state_input = [de_state_input_h, de_state_input_c]
         de_outputs, st_h, st_c = decoder(decoder_inputs, initial_state=de_state_input)
-        en_outputs = Input(shape=(None, 256))
+        en_outputs = Input(shape=(None, 256), name='encoder_output')
         atten = Dot([2, 2])([de_outputs, en_outputs])
         atten = Activation('softmax')(atten)
         cotxt = Dot([2, 1])([atten, en_outputs])
@@ -101,11 +101,12 @@ class ChatBot(object):
 
     def train_model(self):
         self.model.compile(optimizer='rmsprop', loss='categorical_crossentropy')
-        self.model.fit([self.en_ipt, self.de_ipt], self.de_opt, batch_size=self.bs, epochs=self.epoch, validation_split=.2)
+        self.model.fit([self.en_ipt, self.de_ipt], self.de_opt, batch_size=self.bs, epochs=self.epoch, validation_split=.15)
 
     def dialogue(self, input_text):
         input_seq = self.tokenizer.texts_to_sequences([input_text])
-        en_outputs, st_h, st_c = self.encoder_model.predict(input_seq)
+        en_outputs, st_h, st_c = self.encoder_model.predict(input_seq, batch_size=1)
+        en_outputs = np.reshape(en_outputs, (1, -1, 256))
         states = [st_h, st_c]
         target_seq = np.asarray([[self.word2idx['bos']]])
         stop = False
