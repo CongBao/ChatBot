@@ -33,11 +33,15 @@ class ChatBot(object):
         self.tfr = kwargs.get('tfr', 0.7)
 
     def load_data(self):
+        # load and tokenize raw dialog texts
         raw_text = preprocess_text(load_text(self.text_dir))
         self.tokenizer = Tokenizer()
         self.tokenizer.fit_on_texts(['bos ' + line + ' eos' for line in raw_text])
         self.voc_size = len(self.tokenizer.word_index) + 1
         print('Number of tokens: ', self.voc_size)
+        # Initialize input sequence of encoder and decoder
+        # Here encoder input [0::2] for one question to one answer, [:-1] for more actual conversation
+        # Similarly, decoder input [1::2] for Q-A, [1:] for conversation without splitting Q and A
         self.en_ipt = self.tokenizer.texts_to_sequences(raw_text[0::2]) # [:-1]
         self.de_ipt = self.tokenizer.texts_to_sequences(['bos ' + line for line in raw_text[1::2]]) # [1:]
         self.max_en_seq = max([len(s) for s in self.en_ipt])
@@ -46,6 +50,7 @@ class ChatBot(object):
         print('Max output sequence length: ', self.max_de_seq)
         self.en_ipt = np.asarray(pad_sequences(self.en_ipt, padding='post'))
         self.de_ipt = np.asarray(pad_sequences(self.de_ipt, padding='post'))
+        # Initialize target sequence, here decoder inputs are transformed into one-hot representation
         de_opt_seq = self.tokenizer.texts_to_sequences([line + ' eos' for line in raw_text[1::2]]) # [1:]
         de_opt_seq = pad_sequences(de_opt_seq, padding='post')
         self.de_opt = []
@@ -54,53 +59,62 @@ class ChatBot(object):
             one_hot[:,0] = 0.
             self.de_opt.append(one_hot)
         self.de_opt = np.asarray(self.de_opt)
+        # Load pre-trained word embeddings and deal with OOV words
         self.embed_dict, self.dim, oov = load_embedding(self.embd_dir, self.tokenizer.word_index.keys())
         print('Number of OOV words: ', len(oov))
         self.embed_dict.update(OOV(raw_text, self.embed_dict, oov, self.dim).fit())
         save_embedding(self.ckpt_dir + 'embedding.txt', self.embed_dict)
-        self.embed_mat = np.zeros((self.voc_size, self.dim))
+        # Prepare word-index and index-word maps for future use
         self.word2idx = self.tokenizer.word_index
         self.idx2word = self.tokenizer.index_word
+        # Prepare embedding matrix to initialize embedding layer
+        self.embed_mat = np.zeros((self.voc_size, self.dim))
         for word, idx in self.tokenizer.word_index.items():
             self.embed_mat[idx] = self.embed_dict[word]
 
     def load_saved_data(self):
+        # Load and tokenize raw dialog texts
         raw_text = preprocess_text(load_text(self.text_dir))
         self.tokenizer = Tokenizer()
         self.tokenizer.fit_on_texts(['bos ' + line + ' eos' for line in raw_text])
         self.voc_size = len(self.tokenizer.word_index) + 1
         self.max_de_seq = max([len(s.split()) for s in raw_text])
+        # Load selected pre-trained word embeddings
         self.embed_dict, self.dim = load_embedding(self.ckpt_dir + 'embedding.txt')
-        self.embed_mat = np.zeros((self.voc_size, self.dim))
+        # Prepare word-index and index-word maps for future use
         self.word2idx = self.tokenizer.word_index
         self.idx2word = self.tokenizer.index_word
+        # Prepare embedding matrix to initialize embedding layer
+        self.embed_mat = np.zeros((self.voc_size, self.dim))
         for word, idx in self.tokenizer.word_index.items():
             self.embed_mat[idx] = self.embed_dict[word]
 
     def build_model(self, load_weights=False):
+        # A shared embedding layer, weights are initialized with pre-trained word embeddings
         embedding = Embedding(self.voc_size, self.dim, weights=[self.embed_mat], trainable=False, mask_zero=True, name='share_embedding')
-
+        # Define the encoder
         en_input = Input(shape=(None,), name='encoder_input')
         encoder_inputs = embedding(en_input)
         encoder = LSTM(256, return_state=True, return_sequences=True, name='encoder_lstm')
         encoder_outputs, state_h, state_c = encoder(encoder_inputs)
-
+        # Define the decoder
         de_input = Input(shape=(None,), name='decoder_input')
         decoder_inputs = embedding(de_input)
         decoder = LSTM(256, return_state=True, return_sequences=True, name='decoder_lstm')
         decoder_outputs, _, _ = decoder(decoder_inputs, initial_state=[state_h, state_c])
-
+        # Add attention in decoder
         attention = Dot([2, 2])([decoder_outputs, encoder_outputs])
         attention = Activation('softmax')(attention)
         context = Dot([2, 1])([attention, encoder_outputs])
         decoder_combined = Concatenate()([context, decoder_outputs])
         decoder_dense = Dense(self.voc_size, activation='softmax')
         outputs = decoder_dense(decoder_combined)
-
         self.model = Model([en_input, de_input], outputs)
 
+        # Prepare a separate encoder model
         self.encoder_model = Model(en_input, [encoder_outputs, state_h, state_c])
 
+        # Prepare a separate decoder model
         de_state_input_h = Input(shape=(256,), name='state_h')
         de_state_input_c = Input(shape=(256,), name='state_c')
         de_state_input = [de_state_input_h, de_state_input_c]
@@ -138,9 +152,9 @@ class ChatBot(object):
                 en_ipt_bc = self.en_ipt[batch_idx]
                 de_ipt_bc = self.de_ipt[batch_idx]
                 de_opt_bc = self.de_opt[batch_idx]
-                if np.random.rand() < self.tfr:
+                if np.random.rand() < self.tfr:  # apply teacher forcing
                     bc_loss = self.model.train_on_batch([en_ipt_bc, de_ipt_bc], de_opt_bc)
-                else:
+                else:  # do not apply teacher forcing
                     ipt_len = [sum(i) for i in np.any(de_opt_bc, axis=-1)]
                     de_ipt_nt = np.zeros((self.max_de_seq, self.bs), dtype='int64')
                     en_out, h, c = self.encoder_model.predict(en_ipt_bc, batch_size=self.bs)
@@ -172,7 +186,7 @@ class ChatBot(object):
         states = [st_h, st_c]
         target_seq = np.asarray([[self.word2idx['bos']]])
         answer = ''
-        if mode == 'beam':
+        if mode == 'beam':  # apply beam search
             answers = []
             output_tokens, h, c = self.decoder_model.predict([en_outputs, target_seq] + states)
             top_k_idx = np.argpartition(output_tokens[0, -1, :], -k)[-k:]
@@ -200,7 +214,7 @@ class ChatBot(object):
             best_answer = answers[np.argmax(dead_list)]
             for token in best_answer[:-1]:
                 answer += self.idx2word[token[0]] + ' '
-        elif mode == 'greedy':
+        elif mode == 'greedy':  # apply greedy approach
             while True:
                 output_tokens, h, c = self.decoder_model.predict([en_outputs, target_seq] + states)
                 sampled_token_idx = np.argmax(output_tokens[0, -1, :])
