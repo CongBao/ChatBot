@@ -37,6 +37,7 @@ def main():
     cb = ChatBot(**params)
     print('Dialog text path: ', params['text'])
     print('Checkpoint directory: ', params['ckpt'])
+    print('Decoding mode: %s' % ('Beam seach with search size ' + str(args.k) if args.mode == 'beam' else 'Greedy'))
     print('Running on %s' % ('CPU' if args.cpu else 'GPU'))
     cb.load_saved_data()
     cb.build_model(load_weights=True)
