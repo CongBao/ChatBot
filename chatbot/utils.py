@@ -2,6 +2,7 @@
 
 from __future__ import print_function, division
 
+import re
 import numpy as np
 from tqdm import tqdm
 
@@ -9,10 +10,12 @@ __author__ = 'Cong Bao'
 
 BAR_FMT = 'Progress: {percentage:3.0f}% {r_bar}'
 
+
 def load_text(path):
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.read().split('\n')
     return lines
+
 
 def load_embedding(path, words=None):
     embedding = {}
@@ -34,6 +37,7 @@ def load_embedding(path, words=None):
                 embed = line.split()
                 embedding[embed[0]] = np.asarray(embed[1:], dtype='float32')
         return embedding
+
 
 def text_preprocess(text):
     l1 = ['won’t', 'won\'t', 'wouldn’t', 'wouldn\'t', '’m', '’re', '’ve', '’ll', '’s', '’d', 'n’t', '\'m', '\'re',
@@ -66,3 +70,36 @@ def text_preprocess(text):
             line = 'i do not want to talk about it .'
         new_text.append(line)
     return new_text
+
+
+class Corrector(object):
+    """ The class used to correct user inputs """
+
+    def __init__(self):
+        self.back_slash = re.compile(r'\\+', re.IGNORECASE)
+        self.end_slash = re.compile(r'^.*[^/]$', re.IGNORECASE)
+
+    def replace_backslash(self, line):
+        """ replace backslashes to slashes
+            :param line: the input line
+            :return: string after correction
+        """
+        return self.back_slash.sub('/', line)
+
+    def add_endslash(self, line):
+        """ add a slash in the end of line
+            :param line: the input line
+            :return: string after correction
+        """
+        if self.end_slash.match(line):
+            return line + '/'
+        return line
+
+    def correct(self, line):
+        """ do all corrections
+            :param line: the input line
+            :return: string after correction
+        """
+        line = self.replace_backslash(line)
+        line = self.add_endslash(line)
+        return line

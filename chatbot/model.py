@@ -2,14 +2,14 @@
 
 from __future__ import division, print_function
 
-from keras.models import Model
-from keras.layers import Input, LSTM, Embedding, Dense, Activation, Dot, Concatenate
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
-from keras.utils.generic_utils import Progbar
-from keras.utils import to_categorical
 from keras.callbacks import EarlyStopping, LearningRateScheduler
-import keras.backend as K
+from keras.layers import Activation, Concatenate, Dense, Dot, Embedding, LSTM, Input
+from keras.models import Model
+from keras.preprocessing.sequence import pad_sequences
+from keras.preprocessing.text import Tokenizer
+from keras.utils import to_categorical
+from keras.utils.generic_utils import Progbar
+
 import numpy as np
 
 from .utils import *
@@ -21,15 +21,15 @@ __author__ = 'Cong Bao'
 class ChatBot(object):
 
     def __init__(self, **kwargs):
-        self.text_dir = kwargs.get('text_dir')
-        self.embd_dir = kwargs.get('embd_dir')
-        self.ckpt_dir = kwargs.get('ckpt_dir')
+        self.text_dir = kwargs.get('text')
+        self.embd_dir = kwargs.get('embd')
+        self.ckpt_dir = kwargs.get('ckpt')
 
         self.dim = kwargs.get('dim', 300)
         self.lr = kwargs.get('lr', 0.01)
         self.bs = kwargs.get('bs', 32)
         self.epoch = kwargs.get('epoch', 100)
-        self.tf_ratio = kwargs.get('tf_ratio', 0.7)
+        self.tf_ratio = kwargs.get('tfr', 0.7)
 
     def load_data(self):
         raw_text = text_preprocess(load_text(self.text_dir))
@@ -143,6 +143,8 @@ class ChatBot(object):
             val_loss = self.model.evaluate([self.en_ipt[val_idx], self.de_ipt[val_idx]], self.de_opt[val_idx], batch_size=self.bs, verbose=0)
             progbar.update(train_num, [('val_loss', np.mean(val_loss))])
             cb.on_epoch_end(itr, logs={'loss': np.mean(losses), 'val_loss': np.mean(val_loss)})
+            self.encoder_model.save_weights(self.ckpt_dir + 'encoder.weights.hdf5')
+            self.decoder_model.save_weights(self.ckpt_dir + 'decoder.weights.hdf5')
         cb.on_train_end()
 
     def dialogue(self, input_text, mode='beam', k=5):
