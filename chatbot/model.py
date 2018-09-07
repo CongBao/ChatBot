@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """ The model of chat bot """
 
 from __future__ import division, print_function
@@ -127,6 +129,7 @@ class ChatBot(object):
         cb = CallBacks(cbs)
         cb.set_model(self.model)
 
+        print('Start training chatbot...')
         train_num = len(self.en_ipt)
         cb.on_train_begin()
         for itr in range(self.epoch):
@@ -164,6 +167,7 @@ class ChatBot(object):
             cb.on_epoch_end(itr, logs={'loss': np.mean(losses), 'val_loss': np.mean(val_loss)})
             self.model.save_weights(self.ckpt_dir + 'weights.hdf5')
         cb.on_train_end()
+        print('Chatbot training complete.')
 
     def dialogue(self, input_text, mode='beam', k=5):
         input_text = preprocess_line(input_text)

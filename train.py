@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Launch the training process of model
 
 from __future__ import print_function

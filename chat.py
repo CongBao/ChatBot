@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Load pre-trained model and chat with ChatBot
 
 from __future__ import print_function
