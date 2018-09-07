@@ -1,7 +1,8 @@
 # ChatBot
 A simple implementation of RNN-based chat bot.
 
-Applied attention mechanism, mixed teacher forcing and greedy approach in training, and beam search in decoding.
+Applied attention mechanism, mixed teacher forcing and greedy approach in training,
+and beam search in decoding. Deal with OOV problem in pre-trained word embeddings.
 
 ## Usage
 
