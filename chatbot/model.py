@@ -12,7 +12,7 @@ from keras.utils.generic_utils import Progbar
 
 import numpy as np
 
-from .utils import load_embedding, load_text, text_preprocess, save_embedding
+from .utils import *
 from .oov import OOV
 
 __author__ = 'Cong Bao'
@@ -29,10 +29,10 @@ class ChatBot(object):
         self.lr = kwargs.get('lr', 0.01)
         self.bs = kwargs.get('bs', 32)
         self.epoch = kwargs.get('epoch', 100)
-        self.tf_ratio = kwargs.get('tfr', 0.7)
+        self.tfr = kwargs.get('tfr', 0.7)
 
     def load_data(self):
-        raw_text = text_preprocess(load_text(self.text_dir))
+        raw_text = preprocess_text(load_text(self.text_dir))
         self.tokenizer = Tokenizer()
         self.tokenizer.fit_on_texts(['bos ' + line + ' eos' for line in raw_text])
         self.voc_size = len(self.tokenizer.word_index) + 1
@@ -66,7 +66,7 @@ class ChatBot(object):
             self.idx2word[idx] = word
 
     def load_saved_data(self):
-        raw_text = text_preprocess(load_text(self.text_dir))
+        raw_text = preprocess_text(load_text(self.text_dir))
         self.tokenizer = Tokenizer()
         self.tokenizer.fit_on_texts(['bos ' + line + ' eos' for line in raw_text])
         self.voc_size = len(self.tokenizer.word_index) + 1
@@ -140,7 +140,7 @@ class ChatBot(object):
                 en_ipt_bc = self.en_ipt[batch_idx]
                 de_ipt_bc = self.de_ipt[batch_idx]
                 de_opt_bc = self.de_opt[batch_idx]
-                if np.random.rand() < self.tf_ratio:
+                if np.random.rand() < self.tfr:
                     bc_loss = self.model.train_on_batch([en_ipt_bc, de_ipt_bc], de_opt_bc)
                 else:
                     ipt_len = [sum(i) for i in np.any(de_opt_bc, axis=-1)]
@@ -166,6 +166,7 @@ class ChatBot(object):
         cb.on_train_end()
 
     def dialogue(self, input_text, mode='beam', k=5):
+        input_text = preprocess_line(input_text)
         input_seq = self.tokenizer.texts_to_sequences([input_text])
         en_outputs, st_h, st_c = self.encoder_model.predict(input_seq)
         en_outputs = np.reshape(en_outputs, (1, -1, 256))

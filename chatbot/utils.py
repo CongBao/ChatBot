@@ -3,6 +3,7 @@
 from __future__ import print_function, division
 
 import re
+
 import numpy as np
 from tqdm import tqdm
 
@@ -47,37 +48,37 @@ def save_embedding(path, embed):
         f.writelines('%s\n' % line for line in embed_list)
 
 
-def text_preprocess(text):
-    l1 = ['won’t', 'won\'t', 'wouldn’t', 'wouldn\'t', '’m', '’re', '’ve', '’ll', '’s', '’d', 'n’t', '\'m', '\'re',
+def preprocess_text(text):
+    return [preprocess_line(line) for line in text]
+
+def preprocess_line(line):
+    c1 = ['won’t', 'won\'t', 'wouldn’t', 'wouldn\'t', '’m', '’re', '’ve', '’ll', '’s', '’d', 'n’t', '\'m', '\'re',
           '\'ve', '\'ll', '\'s', '\'d', 'can\'t', 'n\'t', 'B: ', 'A: ', ',', ';', '.', '?', '!', ':', '. ?', ',   .',
           '. ,', 'EOS', 'BOS', 'eos', 'bos']
-    l2 = ['will not', 'will not', 'would not', 'would not', ' am', ' are', ' have', ' will', ' is', ' had', ' not',
+    c2 = ['will not', 'will not', 'would not', 'would not', ' am', ' are', ' have', ' will', ' is', ' had', ' not',
           ' am', ' are', ' have', ' will', ' is', ' had', 'can not', ' not', '', '', ' ,', ' ;', ' .', ' ?', ' !', ' :',
           '? ', '.', ',', '', '', '', '']
-    l3 = ['-', '_', ' *', ' /', '* ', '/ ', '\'', ' \'', '\' ', '--', '...', '. . .']
-    new_text = []
-    for line in text:
-        line = line.strip().lower()
-        for i, term in enumerate(l1):
-            line = line.replace(term, l2[i])
-        for term in l3:
-            line = line.replace(term, ' ')
-        for i in range(30):
-            line = line.replace('. .', '')
-            line = line.replace('.  .', '')
-            line = line.replace('..', '')
-        for i in range(10):
-            line = line.replace('  ', ' ')
-        if line[-1] != '!' and line[-1] != '?' and line[-1] != '.':
-            line = line + ' .'
-        if line[-2:] != '! ' and line[-2:] != '? ' and line[-2:] != '. ':
-            line = line + ' .'
-        if line == ' !' or line == ' ?' or line == ' .' or line == ' ! ' or line == ' ? ' or line == ' . ':
-            line = 'what ?'
-        if line == '  .' or line == ' .' or line == '  . ':
-            line = 'i do not want to talk about it .'
-        new_text.append(line)
-    return new_text
+    c3 = ['-', '_', ' *', ' /', '* ', '/ ', '\'', ' \'', '\' ', '--', '...', '. . .']
+    line = line.strip().lower()
+    for i, term in enumerate(c1):
+        line = line.replace(term, c2[i])
+    for term in c3:
+        line = line.replace(term, ' ')
+    for i in range(30):
+        line = line.replace('. .', '')
+        line = line.replace('.  .', '')
+        line = line.replace('..', '')
+    for i in range(10):
+        line = line.replace('  ', ' ')
+    if line[-1] != '!' and line[-1] != '?' and line[-1] != '.':
+        line = line + ' .'
+    if line[-2:] != '! ' and line[-2:] != '? ' and line[-2:] != '. ':
+        line = line + ' .'
+    if line == ' !' or line == ' ?' or line == ' .' or line == ' ! ' or line == ' ? ' or line == ' . ':
+        line = 'what ?'
+    if line == '  .' or line == ' .' or line == '  . ':
+        line = 'i do not want to talk about it .'
+    return line
 
 
 class Corrector(object):
