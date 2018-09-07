@@ -22,6 +22,7 @@ def load_text(path):
 
 def load_embedding(path, words=None):
     embedding = {}
+    dim = 0
     if words is not None:
         oov = list(words)
         with open(path) as f:
@@ -29,17 +30,19 @@ def load_embedding(path, words=None):
             for line in tqdm(f, bar_format=BAR_FMT):
                 embed = line.split()
                 word = embed[0].lower()
+                dim = len(embed[1:])
                 if word in oov:
                     embedding[word] = np.asarray(embed[1:], dtype='float32')
                     oov.remove(word)
-        return embedding, oov
+        return embedding, dim, oov
     else:
         with open(path) as f:
             print('Loading ', path)
             for line in tqdm(f, bar_format=BAR_FMT):
                 embed = line.split()
+                dim = len(embed[1:])
                 embedding[embed[0]] = np.asarray(embed[1:], dtype='float32')
-        return embedding
+        return embedding, dim
 
 
 def save_embedding(path, embed):

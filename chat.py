@@ -21,7 +21,6 @@ def main():
     add_arg = parser.add_argument
     add_arg('--text', dest='text', type=str, required=True, help='Path of dialog text')
     add_arg('--ckpt', dest='ckpt', type=str, default=CHECKPOINT, help='Path to store checkpoints')
-    add_arg('-d', dest='dim', type=int, default=DIMENSION, help='Dimensionality of word embedding')
     add_arg('-m', dest='mode', type=str, default=MODE, help='The mode used to decode, either beam or greedy')
     add_arg('-k', dest='k', type=int, default=K, help='Beam search size if in beam mode')
     add_arg('--cpu-only', dest='cpu', action='store_true', help='whether use cpu or not')
@@ -29,8 +28,7 @@ def main():
     corr = Corrector().correct
     params = {
         'text': args.text,
-        'ckpt': corr(args.ckpt),
-        'dim': args.dim
+        'ckpt': corr(args.ckpt)
     }
     if args.cpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = ''
@@ -39,7 +37,6 @@ def main():
     cb = ChatBot(**params)
     print('Dialog text path: ', params['text'])
     print('Checkpoint directory: ', params['ckpt'])
-    print('Word embedding dimensionality: ', params['dim'])
     print('Running on %s' % ('CPU' if args.cpu else 'GPU'))
     cb.load_saved_data()
     cb.build_model(load_weights=True)

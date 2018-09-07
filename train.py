@@ -22,11 +22,10 @@ TF_RATIO = 0.7
 def main():
     parser = argparse.ArgumentParser()
     add_arg = parser.add_argument
-    add_arg('--text', dest='text', type=str, default=None, help='Path of dialog text')
-    add_arg('--embed', dest='embed', type=str, default=None, help='Path of pre-trained word embedding')
+    add_arg('--text', dest='text', type=str, required=True, help='Path of dialog text')
+    add_arg('--embed', dest='embed', type=str, required=True, help='Path of pre-trained word embedding')
     add_arg('--ckpt', dest='ckpt', type=str, default=CHECKPOINT, help='Path to store checkpoints')
     add_arg('--tfr', dest='tfr', type=float, default=TF_RATIO, help='Ratio of teacher forcing learning')
-    add_arg('-d', dest='dim', type=int, default=DIMENSION, help='Dimensionality of word embedding')
     add_arg('-r', dest='rate', type=float, default=LEARNING_RATE, help='Learning rate')
     add_arg('-b', dest='batch', type=int, default=BATCH_SIZE, help='Batch size')
     add_arg('-e', dest='epoch', type=int, default=EPOCH, help='Epoch number')
@@ -37,7 +36,6 @@ def main():
         'text': args.text,
         'embd': args.embed,
         'ckpt': corr(args.ckpt),
-        'dim': args.dim,
         'lr': args.rate,
         'bs': args.batch,
         'epoch': args.epoch,
@@ -53,7 +51,6 @@ def main():
     print('Dialog text path: ', params['text'])
     print('Word embedding path: ', params['embd'])
     print('Checkpoint directory: ', params['ckpt'])
-    print('Word embedding dimensionality: ', params['dim'])
     print('Learning rate: ', params['lr'])
     print('Batch size', params['bs'])
     print('Epoch: ', params['epoch'])

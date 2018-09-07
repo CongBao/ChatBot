@@ -27,7 +27,6 @@ class ChatBot(object):
         self.embd_dir = kwargs.get('embd')
         self.ckpt_dir = kwargs.get('ckpt')
 
-        self.dim = kwargs.get('dim', 300)
         self.lr = kwargs.get('lr', 0.01)
         self.bs = kwargs.get('bs', 32)
         self.epoch = kwargs.get('epoch', 100)
@@ -55,17 +54,15 @@ class ChatBot(object):
             one_hot[:,0] = 0.
             self.de_opt.append(one_hot)
         self.de_opt = np.asarray(self.de_opt)
-        self.embed_dict, oov = load_embedding(self.embd_dir, self.tokenizer.word_index.keys())
+        self.embed_dict, self.dim, oov = load_embedding(self.embd_dir, self.tokenizer.word_index.keys())
         print('Number of OOV words: ', len(oov))
         self.embed_dict.update(OOV(raw_text, self.embed_dict, oov, self.dim).fit())
         save_embedding(self.ckpt_dir + 'embedding.txt', self.embed_dict)
         self.embed_mat = np.zeros((self.voc_size, self.dim))
-        self.word2idx = {}
-        self.idx2word = [None] * self.voc_size
+        self.word2idx = self.tokenizer.word_index
+        self.idx2word = self.tokenizer.index_word
         for word, idx in self.tokenizer.word_index.items():
             self.embed_mat[idx] = self.embed_dict[word]
-            self.word2idx[word] = idx
-            self.idx2word[idx] = word
 
     def load_saved_data(self):
         raw_text = preprocess_text(load_text(self.text_dir))
@@ -73,14 +70,12 @@ class ChatBot(object):
         self.tokenizer.fit_on_texts(['bos ' + line + ' eos' for line in raw_text])
         self.voc_size = len(self.tokenizer.word_index) + 1
         self.max_de_seq = max([len(s.split()) for s in raw_text])
-        self.embed_dict = load_embedding(self.ckpt_dir + 'embedding.txt')
+        self.embed_dict, self.dim = load_embedding(self.ckpt_dir + 'embedding.txt')
         self.embed_mat = np.zeros((self.voc_size, self.dim))
-        self.word2idx = {}
-        self.idx2word = [None] * self.voc_size
+        self.word2idx = self.tokenizer.word_index
+        self.idx2word = self.tokenizer.index_word
         for word, idx in self.tokenizer.word_index.items():
             self.embed_mat[idx] = self.embed_dict[word]
-            self.word2idx[word] = idx
-            self.idx2word[idx] = word
 
     def build_model(self, load_weights=False):
         embedding = Embedding(self.voc_size, self.dim, weights=[self.embed_mat], trainable=False, mask_zero=True, name='share_embedding')

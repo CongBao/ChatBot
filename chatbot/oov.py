@@ -72,7 +72,7 @@ class OOV(object):
         tar_ipt = np.reshape(tar_ipt, (-1, 1))
         ctx_ipt = np.reshape(ctx_ipt, (-1, 1))
         outputs = np.reshape(outputs, (-1, 1))
-        self.model.compile(loss='binary_crossentropy', optimizer='rmsprop')
+        self.model.compile(loss='binary_crossentropy', optimizer='adam')
         print('Learning OOV word embeddings...')
         self.model.fit([tar_ipt, ctx_ipt], outputs, batch_size=self.batch_size, epochs=self.epochs, validation_split=0.1)
         print('OOV word embeddings learning complete.')
