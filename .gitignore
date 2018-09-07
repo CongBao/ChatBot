@@ -2,6 +2,6 @@ __pycache__/
 .pyc
 .idea/
 graphs/
-checkpoints/
+checkpoint/
 examples/
 results/

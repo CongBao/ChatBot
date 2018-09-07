@@ -12,7 +12,7 @@ from keras.utils.generic_utils import Progbar
 
 import numpy as np
 
-from .utils import *
+from .utils import load_embedding, load_text, text_preprocess, save_embedding
 from .oov import OOV
 
 __author__ = 'Cong Bao'
@@ -56,6 +56,7 @@ class ChatBot(object):
         self.embed_dict, oov = load_embedding(self.embd_dir, self.tokenizer.word_index.keys())
         print('Number of OOV words: ', len(oov))
         self.embed_dict.update(OOV(raw_text, self.embed_dict, oov, self.dim).fit())
+        save_embedding(self.ckpt_dir + 'embedding.txt', self.embed_dict)
         self.embed_mat = np.zeros((self.voc_size, self.dim))
         self.word2idx = {}
         self.idx2word = [None] * self.voc_size
@@ -64,7 +65,22 @@ class ChatBot(object):
             self.word2idx[word] = idx
             self.idx2word[idx] = word
 
-    def build_model(self):
+    def load_saved_data(self):
+        raw_text = text_preprocess(load_text(self.text_dir))
+        self.tokenizer = Tokenizer()
+        self.tokenizer.fit_on_texts(['bos ' + line + ' eos' for line in raw_text])
+        self.voc_size = len(self.tokenizer.word_index) + 1
+        self.max_de_seq = max([len(s.split()) for s in raw_text])
+        self.embed_dict = load_embedding(self.ckpt_dir + 'embedding.txt')
+        self.embed_mat = np.zeros((self.voc_size, self.dim))
+        self.word2idx = {}
+        self.idx2word = [None] * self.voc_size
+        for word, idx in self.tokenizer.word_index.items():
+            self.embed_mat[idx] = self.embed_dict[word]
+            self.word2idx[word] = idx
+            self.idx2word[idx] = word
+
+    def build_model(self, load_weights=False):
         embedding = Embedding(self.voc_size, self.dim, weights=[self.embed_mat], trainable=False, mask_zero=True, name='share_embedding')
 
         en_input = Input(shape=(None,), name='encoder_input')
@@ -99,7 +115,10 @@ class ChatBot(object):
         de_comb = Concatenate()([cotxt, de_outputs])
         out = decoder_dense(de_comb)
         self.decoder_model = Model([en_outputs, de_input] + de_state_input, [out, st_h, st_c])
-        self.model.compile(optimizer='adam', loss='categorical_crossentropy')
+        if load_weights:
+            self.model.load_weights(self.ckpt_dir + 'weights.hdf5')
+        else:
+            self.model.compile(optimizer='adam', loss='categorical_crossentropy')
 
     def train_model(self):
         cbs = []
@@ -143,8 +162,7 @@ class ChatBot(object):
             val_loss = self.model.evaluate([self.en_ipt[val_idx], self.de_ipt[val_idx]], self.de_opt[val_idx], batch_size=self.bs, verbose=0)
             progbar.update(train_num, [('val_loss', np.mean(val_loss))])
             cb.on_epoch_end(itr, logs={'loss': np.mean(losses), 'val_loss': np.mean(val_loss)})
-            self.encoder_model.save_weights(self.ckpt_dir + 'encoder.weights.hdf5')
-            self.decoder_model.save_weights(self.ckpt_dir + 'decoder.weights.hdf5')
+            self.model.save_weights(self.ckpt_dir + 'weights.hdf5')
         cb.on_train_end()
 
     def dialogue(self, input_text, mode='beam', k=5):
@@ -192,7 +210,7 @@ class ChatBot(object):
                 answer += sampled_word + ' '
                 target_seq = np.asarray([[sampled_token_idx]])
                 states = [h, c]
-        return answer.strip().capitalize()
+        return answer.strip().capitalize() + '.'
 
 
 class CallBacks(object):

@@ -39,6 +39,14 @@ def load_embedding(path, words=None):
         return embedding
 
 
+def save_embedding(path, embed):
+    embed_list = []
+    for w, e in embed.items():
+        embed_list.append(w + ' ' + ' '.join(str(i) for i in e))
+    with open(path, 'w') as f:
+        f.writelines('%s\n' % line for line in embed_list)
+
+
 def text_preprocess(text):
     l1 = ['won’t', 'won\'t', 'wouldn’t', 'wouldn\'t', '’m', '’re', '’ve', '’ll', '’s', '’d', 'n’t', '\'m', '\'re',
           '\'ve', '\'ll', '\'s', '\'d', 'can\'t', 'n\'t', 'B: ', 'A: ', ',', ';', '.', '?', '!', ':', '. ?', ',   .',

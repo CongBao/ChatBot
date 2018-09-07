@@ -9,13 +9,13 @@ from chatbot.utils import Corrector
 
 __author__ = 'Cong Bao'
 
-CHECKPOINT = os.getcwd() + '/checkpoints/'
-
+CHECKPOINT = os.getcwd() + '/checkpoint/'
 DIMENSION = 300
 LEARNING_RATE = 0.01
 BATCH_SIZE = 32
 EPOCH = 100
 TF_RATIO = 0.7
+
 
 def main():
     parser = argparse.ArgumentParser()
