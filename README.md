@@ -43,3 +43,115 @@ Specify file path
 Processing on CPU
 
     python train.py [...] --cpu-only
+    
+## References
+
+Main Reference (seq2seq on chat bot)
+
+    @article{DBLP:journals/corr/VinyalsL15,
+      author    = {Oriol Vinyals and
+                   Quoc V. Le},
+      title     = {A Neural Conversational Model},
+      journal   = {CoRR},
+      volume    = {abs/1506.05869},
+      year      = {2015},
+      url       = {http://arxiv.org/abs/1506.05869},
+      archivePrefix = {arXiv},
+      eprint    = {1506.05869},
+      timestamp = {Mon, 13 Aug 2018 16:48:58 +0200},
+      biburl    = {https://dblp.org/rec/bib/journals/corr/VinyalsL15},
+      bibsource = {dblp computer science bibliography, https://dblp.org}
+    }
+
+Long Short-Term Memory
+
+    @article{DBLP:journals/corr/Graves13,
+      author    = {Alex Graves},
+      title     = {Generating Sequences With Recurrent Neural Networks},
+      journal   = {CoRR},
+      volume    = {abs/1308.0850},
+      year      = {2013},
+      url       = {http://arxiv.org/abs/1308.0850},
+      archivePrefix = {arXiv},
+      eprint    = {1308.0850},
+      timestamp = {Mon, 13 Aug 2018 16:47:21 +0200},
+      biburl    = {https://dblp.org/rec/bib/journals/corr/Graves13},
+      bibsource = {dblp computer science bibliography, https://dblp.org}
+    }
+    
+Seq2seq
+
+    @article{DBLP:journals/corr/ChoMGBSB14,
+      author    = {Kyunghyun Cho and
+                   Bart van Merrienboer and
+                   {\c{C}}aglar G{\"{u}}l{\c{c}}ehre and
+                   Fethi Bougares and
+                   Holger Schwenk and
+                   Yoshua Bengio},
+      title     = {Learning Phrase Representations using {RNN} Encoder-Decoder for Statistical
+                   Machine Translation},
+      journal   = {CoRR},
+      volume    = {abs/1406.1078},
+      year      = {2014},
+      url       = {http://arxiv.org/abs/1406.1078},
+      archivePrefix = {arXiv},
+      eprint    = {1406.1078},
+      timestamp = {Mon, 13 Aug 2018 16:46:44 +0200},
+      biburl    = {https://dblp.org/rec/bib/journals/corr/ChoMGBSB14},
+      bibsource = {dblp computer science bibliography, https://dblp.org}
+    }
+    
+Attention
+
+    @article{DBLP:journals/corr/LuongPM15,
+      author    = {Minh{-}Thang Luong and
+                   Hieu Pham and
+                   Christopher D. Manning},
+      title     = {Effective Approaches to Attention-based Neural Machine Translation},
+      journal   = {CoRR},
+      volume    = {abs/1508.04025},
+      year      = {2015},
+      url       = {http://arxiv.org/abs/1508.04025},
+      archivePrefix = {arXiv},
+      eprint    = {1508.04025},
+      timestamp = {Mon, 13 Aug 2018 16:46:14 +0200},
+      biburl    = {https://dblp.org/rec/bib/journals/corr/LuongPM15},
+      bibsource = {dblp computer science bibliography, https://dblp.org}
+    }
+    
+Beam Search
+
+    @article{DBLP:journals/corr/FreitagA17,
+      author    = {Markus Freitag and
+                   Yaser Al{-}Onaizan},
+      title     = {Beam Search Strategies for Neural Machine Translation},
+      journal   = {CoRR},
+      volume    = {abs/1702.01806},
+      year      = {2017},
+      url       = {http://arxiv.org/abs/1702.01806},
+      archivePrefix = {arXiv},
+      eprint    = {1702.01806},
+      timestamp = {Mon, 13 Aug 2018 16:49:02 +0200},
+      biburl    = {https://dblp.org/rec/bib/journals/corr/FreitagA17},
+      bibsource = {dblp computer science bibliography, https://dblp.org}
+    }
+    
+Word2vec & Negative Sampling
+
+    @article{DBLP:journals/corr/MikolovSCCD13,
+      author    = {Tomas Mikolov and
+                   Ilya Sutskever and
+                   Kai Chen and
+                   Greg Corrado and
+                   Jeffrey Dean},
+      title     = {Distributed Representations of Words and Phrases and their Compositionality},
+      journal   = {CoRR},
+      volume    = {abs/1310.4546},
+      year      = {2013},
+      url       = {http://arxiv.org/abs/1310.4546},
+      archivePrefix = {arXiv},
+      eprint    = {1310.4546},
+      timestamp = {Mon, 13 Aug 2018 16:47:09 +0200},
+      biburl    = {https://dblp.org/rec/bib/journals/corr/MikolovSCCD13},
+      bibsource = {dblp computer science bibliography, https://dblp.org}
+    }
