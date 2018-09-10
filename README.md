@@ -65,6 +65,25 @@ Main Reference (seq2seq on chat bot)
 
 Long Short-Term Memory
 
+    @article{Hochreiter:1997:LSM:1246443.1246450,
+      author = {Hochreiter, Sepp and Schmidhuber, J\"{u}rgen},
+      title = {Long Short-Term Memory},
+      journal = {Neural Comput.},
+      issue_date = {November 15, 1997},
+      volume = {9},
+      number = {8},
+      month = nov,
+      year = {1997},
+      issn = {0899-7667},
+      pages = {1735--1780},
+      numpages = {46},
+      url = {http://dx.doi.org/10.1162/neco.1997.9.8.1735},
+      doi = {10.1162/neco.1997.9.8.1735},
+      acmid = {1246450},
+      publisher = {MIT Press},
+      address = {Cambridge, MA, USA},
+    }
+
     @article{DBLP:journals/corr/Graves13,
       author    = {Alex Graves},
       title     = {Generating Sequences With Recurrent Neural Networks},
