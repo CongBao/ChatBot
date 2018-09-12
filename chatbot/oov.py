@@ -25,33 +25,41 @@ class OOV(object):
         self.epochs = kwargs.get('epoch', 2)
 
     def build(self):
+        # tokenize raw texts
         self.tokenizer = Tokenizer()
         self.tokenizer.fit_on_texts(['bos ' + line + ' eos' for line in self.raw_text])
         self.voc_size = len(self.tokenizer.word_index) + 1
+        # prepare embedding matrix to initialize embedding layer
+        # for OOV words, simply set to vectors with zeros
         embed_mat = np.zeros((self.voc_size, self.dim))
         for word, idx in self.tokenizer.word_index.items():
             embed_mat[idx] = self.emb_dict.get(word, [0.] * self.dim)
-
+        # target OOV words to learn
         target = Input(shape=(1,), name='target')
         tar_embed = Embedding(self.voc_size, self.dim, input_length=1, name='target_embedding')(target)
+        # pre-trained words
         context = Input(shape=(1,), name='context')
         ctx_embed = Embedding(self.voc_size, self.dim, input_length=1, weights=[embed_mat], trainable=False, name='context_embedding')(context)
-
+        # calculate similarity
         dot_product = Dot([2, 2])([tar_embed, ctx_embed])
         dot_product = Reshape((1,))(dot_product)
         output = Dense(1, activation='sigmoid')(dot_product)
         self.model = Model([target, context], output)
-
+        # prepare a separate embedding model to fetch learned embeddings
         self.embed_model = Model(target, tar_embed)
 
     def fit(self):
+        # build model
         self.build()
+        # if there's no OOV word, return empty dict
         if len(self.oov_list) == 0:
             return {}
+        # for <BOS> and <EOS>, initialize with tiny float value
         ext_dict = {}
         for w in ['bos', 'eos', 'BOS', 'EOS']:
             if w in self.oov_list:
                 ext_dict[w] = np.random.normal(0., .0001, (self.dim,))
+        # prepare data pairs for training (negative sampling)
         pairs = []
         for seq in self.tokenizer.texts_to_sequences(self.raw_text):
             words = [token for token in seq]
@@ -72,13 +80,15 @@ class OOV(object):
         tar_ipt = np.reshape(tar_ipt, (-1, 1))
         ctx_ipt = np.reshape(ctx_ipt, (-1, 1))
         outputs = np.reshape(outputs, (-1, 1))
+        # compile and train model
         self.model.compile(loss='binary_crossentropy', optimizer='adam')
         print('Learning OOV word embeddings...')
         self.model.fit([tar_ipt, ctx_ipt], outputs, batch_size=self.batch_size, epochs=self.epochs, validation_split=0.1)
         print('OOV word embeddings learning complete.')
+        # fetch trained embedding for OOV words
         oov_dict = {}
         for w in self.tokenizer.texts_to_sequences(self.oov_list):
             embed = self.embed_model.predict(w)
             oov_dict[self.tokenizer.index_word[w[0]]] = np.reshape(embed, (self.dim,))
-            oov_dict.update(ext_dict)
+        oov_dict.update(ext_dict)
         return oov_dict
