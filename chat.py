@@ -16,6 +16,7 @@ DIMENSION = 300
 MODE = 'beam'
 K = 5
 
+
 def main():
     parser = argparse.ArgumentParser()
     add_arg = parser.add_argument
@@ -42,7 +43,6 @@ def main():
     cb.load_saved_data()
     cb.build_model(load_weights=True)
     print('[Start conversation. Type \'exit\' to stop.]')
-    seq = ''
     while True:
         seq = input('[User]: ')
         seq = seq.strip().lower()
@@ -50,6 +50,7 @@ def main():
             break
         print('[Comp]:', cb.dialogue(seq, mode=args.mode, k=args.k))
     print('[Comp]: Bye!')
+
 
 if __name__ == '__main__':
     main()

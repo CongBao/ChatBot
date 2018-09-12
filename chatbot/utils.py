@@ -15,12 +15,24 @@ BAR_FMT = 'Progress: {percentage:3.0f}% {r_bar}'
 
 
 def load_text(path):
+    """
+    Load raw texts from disk.
+    :param path: path of text
+    :return: list of line strings
+    """
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.read().split('\n')
     return lines
 
 
 def load_embedding(path, words=None):
+    """
+    Load word embeddings from disk.
+    :param path: path of embedding file
+    :param words: a list of selected words
+    :return: (embedding dict, dimensionality, oov list) if words are given,
+             (embedding dict, dimensionality) if words are not given
+    """
     embedding = {}
     dim = 0
     if words is not None:
@@ -46,6 +58,11 @@ def load_embedding(path, words=None):
 
 
 def save_embedding(path, embed):
+    """
+    Save word embeddings to disk.
+    :param path: path to save embeddings
+    :param embed: dict of word embeddings
+    """
     embed_list = []
     for w, e in embed.items():
         embed_list.append(w + ' ' + ' '.join(str(i) for i in e))
@@ -55,6 +72,7 @@ def save_embedding(path, embed):
 
 def preprocess_text(text):
     return [preprocess_line(line) for line in text]
+
 
 def preprocess_line(line):
     c1 = ['won’t', 'won\'t', 'wouldn’t', 'wouldn\'t', '’m', '’re', '’ve', '’ll', '’s', '’d', 'n’t', '\'m', '\'re',
