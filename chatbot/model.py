@@ -205,12 +205,12 @@ class ChatBot(object):
                     top_k_idx = np.argpartition(output_tokens[0, -1, :], -k)[-k:]
                     for idx in top_k_idx:
                         answers.append(seq + [(idx, output_tokens[0, -1, idx], list([h, c]))])
-                dead_list = [sum([x[1] for x in seq]) for seq in answers] # seq[:, 1]
+                dead_list = [sum([np.log(x[1]) for x in seq]) for seq in answers] # seq[:, 1]
                 top_k_idx = np.argpartition(dead_list, -k)[-k:]
                 answers = [answers[i] for i in top_k_idx] # answers[top_k_idx]
                 if all([self.idx2word[s[-1][0]] == 'eos' or len(s) > self.max_de_seq for s in answers]):
                     break
-            dead_list = [sum([x[1] for x in seq]) for seq in answers]
+            dead_list = [sum([np.log(x[1]) for x in seq]) for seq in answers]
             best_answer = answers[np.argmax(dead_list)]
             for token in best_answer[:-1]:
                 answer += self.idx2word[token[0]] + ' '
